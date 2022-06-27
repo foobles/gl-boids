@@ -4,17 +4,23 @@
 char const *VERTEX_SHADER_SOURCE = R"(
     #version 330 core
     layout (location = 0) in vec3 aPos;
+    layout (location = 1) in vec3 aColor;
+
+    out vec3 vertexColor;
+
     void main() {
-        gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+        gl_Position = vec4(aPos, 1.0);
+        vertexColor = aColor;
     }
 )";
 
 char const *FRAGMENT_SHADER_SOURCE = R"(
     #version 330 core
+    in vec3 vertexColor;
     out vec4 fragColor;
 
     void main() {
-        fragColor = vec4(1.0, 0.5, 0.2, 1.0);
+        fragColor = vec4(vertexColor, 1.0);
     }
 )";
 
@@ -61,25 +67,17 @@ int main(int argc, char *argv[]) {
     }
 
     GLfloat vertices[] = {
-            0.5f,  0.5f, 0.0f,  // top right
-            0.5f, -0.5f, 0.0f,  // bottom right
-            -0.5f, -0.5f, 0.0f, // bottom left
-            -0.5f,  0.5f, 0.0f  // top left
+            // positions         // colors
+             0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,   // bottom right
+            -0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,   // bottom left
+             0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f    // top
     };
-
-    GLuint indices[] = {
-            0, 1, 3,
-            1, 2 ,3
-    };
-
 
     GLuint vao;
     glGenVertexArrays(1, &vao);
 
-    GLuint buffers[2];
-    glGenBuffers(2, buffers);
-    GLuint vbo = buffers[0];
-    GLuint ebo = buffers[1];
+    GLuint vbo;
+    glGenBuffers(1, &vbo);
 
     GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertex_shader, 1, &VERTEX_SHADER_SOURCE, nullptr);
@@ -100,11 +98,11 @@ int main(int argc, char *argv[]) {
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, false, 3 * sizeof(GLfloat), static_cast<void*>(0));
+    glVertexAttribPointer(0, 3, GL_FLOAT, false, 6 * sizeof(GLfloat), (void*)(0*sizeof(GLfloat)));
     glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 3, GL_FLOAT, false, 6 * sizeof(GLfloat), (void*)(3*sizeof(GLfloat)));
+    glEnableVertexAttribArray(1);
 
     bool running = true;
     while (running) {
@@ -120,7 +118,7 @@ int main(int argc, char *argv[]) {
 
         glBindVertexArray(vao);
         glUseProgram(shader_program);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
 
         SDL_GL_SwapWindow(window);
 
