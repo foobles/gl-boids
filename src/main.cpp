@@ -1,10 +1,14 @@
-#include <string>
 #include <stdexcept>
-#include <utility>
 
 #include "GL/glew.h"
-#include "SDL.h"
-#include "SDL_image.h"
+#include "SDL_log.h"
+#include "SDL_events.h"
+#include "SDL_timer.h"
+
+#include "sdl_session.hpp"
+#include "sdl_window.hpp"
+#include "gl_session.hpp"
+#include "sdl_image_loader.hpp"
 
 char const *VERTEX_SHADER_SOURCE = R"(
     #version 330 core
@@ -36,177 +40,21 @@ char const *FRAGMENT_SHADER_SOURCE = R"(
     }
 )";
 
-struct WindowConfig {
-    int width;
-    int height;
-    char const *title;
-};
-
-struct GLConfig {
-    int major_version;
-    int minor_version;
-};
-
-class SdlContext {
-public:
-    SdlContext() {
-        if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER) != 0) {
-            throw std::runtime_error(std::string("Error initializing SDL: ") + SDL_GetError());
-        }
-    }
-
-    ~SdlContext() noexcept {
-        SDL_Quit();
-    }
-
-    SdlContext(SdlContext const &other) = delete;
-    SdlContext(SdlContext &&other) = delete;
-    SdlContext &operator=(SdlContext const &other) = delete;
-    SdlContext &operator=(SdlContext &&other) = delete;
-
-    void throw_current_error(std::string &&msg) const {
-        throw std::runtime_error(std::move(msg) + ": " + SDL_GetError());
-    }
-};
-
-class GLContext;
-
-class SdlWindow {
-public:
-    SdlWindow(SdlContext const &sdl, WindowConfig config):
-            window_(SDL_CreateWindow(
-                    config.title,
-                    SDL_WINDOWPOS_UNDEFINED,
-                    SDL_WINDOWPOS_UNDEFINED,
-                    config.width,
-                    config.height,
-                    SDL_WINDOW_OPENGL))
-    {
-        if (window_ == nullptr) {
-            sdl.throw_current_error("Error creating window");
-        }
-    }
-
-    ~SdlWindow() noexcept {
-        SDL_DestroyWindow(window_);
-    }
-
-    SdlWindow(SdlWindow const &other) = delete;
-    SdlWindow(SdlWindow &&other) = delete;
-    SdlWindow &operator=(SdlWindow const &other) = delete;
-    SdlWindow &operator=(SdlWindow &&other) = delete;
-
-    void swap_buffers() const {
-        SDL_GL_SwapWindow(window_);
-    }
-
-    friend class GLContext;
-private:
-    SDL_Window *window_;
-};
-
-
-class GLContext {
-public:
-    GLContext(SdlContext const &sdl, SdlWindow const &window, GLConfig config) {
-        if (SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, config.major_version) != 0) {
-            sdl.throw_current_error("Error setting OpenGL major version");
-        }
-
-        if (SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, config.minor_version) != 0) {
-            sdl.throw_current_error("Error setting OpenGL minor version");
-        }
-
-        gl_context_ = SDL_GL_CreateContext(window.window_);
-        if (gl_context_ == nullptr) {
-            sdl.throw_current_error("Error creating OpenGL context");
-        }
-
-
-        if (GLenum err = glewInit(); err != GLEW_OK) {
-            SDL_GL_DeleteContext(gl_context_);
-            auto glew_err_string = reinterpret_cast<char const *>(glewGetErrorString(err));
-            throw std::runtime_error(std::string("Error initializing GLEW: ") + glew_err_string);
-        }
-    }
-
-    ~GLContext() noexcept {
-        SDL_GL_DeleteContext(gl_context_);
-    }
-
-    GLContext(GLContext const &other) = delete;
-    GLContext(GLContext &&other) = delete;
-    GLContext &operator=(GLContext const &other) = delete;
-    GLContext &operator=(GLContext &&other) = delete;
-
-private:
-    SDL_GLContext gl_context_;
-};
-
-
-class ImageLoader {
-public:
-    explicit ImageLoader(SdlContext const &sdl):
-        sdl_(&sdl)
-    {}
-
-    ~ImageLoader() noexcept {
-        IMG_Quit();
-    }
-
-    [[nodiscard]] SDL_Surface *load_rgb24_image_flipped(char const* path) {
-        SDL_Surface *texture_surface = IMG_Load(path);
-        if (texture_surface == nullptr) {
-            throw std::runtime_error(std::string("Error loading image: ") + IMG_GetError());
-        }
-
-        int height = texture_surface->h;
-        int width = texture_surface->w;
-
-        SDL_Surface *ret = SDL_CreateRGBSurfaceWithFormat(0, width, height, SDL_BITSPERPIXEL(SDL_PIXELFORMAT_RGB24), SDL_PIXELFORMAT_RGB24);
-        if (ret == nullptr) {
-            SDL_FreeSurface(texture_surface);
-            sdl_->throw_current_error("Error creating RGB24 surface when loading flipped image");
-        }
-
-        SDL_Rect src_rect = {0, 0, width, 1};
-        SDL_Rect dest_rect = {0, height - 1, width, 1};
-
-        for (int i = 0; i < height; ++i) {
-            SDL_BlitSurface(texture_surface, &src_rect, ret, &dest_rect);
-            ++src_rect.y;
-            --dest_rect.y;
-        }
-
-        SDL_FreeSurface(texture_surface);
-
-        if (SDL_SetSurfaceRLE(ret, 0) != 0) {
-            SDL_FreeSurface(ret);
-            sdl_->throw_current_error("Error setting surface RLE when loading flipped image");
-        }
-
-        return ret;
-    }
-
-private:
-    SdlContext const *sdl_;
-};
-
 
 int main(int argc, char *argv[]) {
     try {
-        SdlContext sdl;
+        SdlSession sdl;
         SdlWindow window(sdl, {
                 .width = 640,
                 .height = 400,
                 .title = "Hello"
         });
-        GLContext gl(sdl, window, GLConfig{
+        GLSession gl(sdl, window, {
                 .major_version = 3,
                 .minor_version = 3
         });
 
-        ImageLoader image_loader(sdl);
+        SdlImageLoader image_loader(sdl);
 
         GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vertex_shader, 1, &VERTEX_SHADER_SOURCE, nullptr);
@@ -301,6 +149,7 @@ int main(int argc, char *argv[]) {
         }
     } catch(std::runtime_error const &err) {
         SDL_Log(err.what());
+        return 1;
     }
     return 0;
 }
