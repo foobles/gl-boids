@@ -206,6 +206,8 @@ int main(int argc, char *argv[]) {
                 .minor_version = 3
         });
 
+        ImageLoader image_loader(sdl);
+
         GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vertex_shader, 1, &VERTEX_SHADER_SOURCE, nullptr);
         glCompileShader(vertex_shader);
@@ -221,7 +223,7 @@ int main(int argc, char *argv[]) {
         glDeleteShader(vertex_shader);
         glDeleteShader(fragment_shader);
 
-        SDL_Surface *rgb_img = ImageLoader(sdl).load_rgb24_image_flipped("assets/wall.jpg");
+        SDL_Surface *rgb_img = image_loader.load_rgb24_image_flipped("assets/wall.jpg");
         GLuint tex;
         glGenTextures(1, &tex);
 
