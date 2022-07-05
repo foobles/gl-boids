@@ -9,6 +9,7 @@
 #include "sdl_window.hpp"
 #include "gl_session.hpp"
 #include "sdl_image_loader.hpp"
+#include "gl_shader_program.hpp"
 
 char const *VERTEX_SHADER_SOURCE = R"(
     #version 330 core
@@ -56,20 +57,10 @@ int main(int argc, char *argv[]) {
 
         SdlImageLoader image_loader(sdl);
 
-        GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertex_shader, 1, &VERTEX_SHADER_SOURCE, nullptr);
-        glCompileShader(vertex_shader);
-
-        GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragment_shader, 1, &FRAGMENT_SHADER_SOURCE, nullptr);
-        glCompileShader(fragment_shader);
-
-        GLuint shader_program = glCreateProgram();
-        glAttachShader(shader_program, vertex_shader);
-        glAttachShader(shader_program, fragment_shader);
-        glLinkProgram(shader_program);
-        glDeleteShader(vertex_shader);
-        glDeleteShader(fragment_shader);
+        auto shader_program = GLShaderProgramBuilder()
+                .vertex_shader(VERTEX_SHADER_SOURCE)
+                .fragment_shader(FRAGMENT_SHADER_SOURCE)
+                .build(gl);
 
         SDL_Surface *rgb_img = image_loader.load_rgb24_image_flipped("assets/wall.jpg");
         GLuint tex;
@@ -124,8 +115,8 @@ int main(int argc, char *argv[]) {
         glVertexAttribPointer(2, 2, GL_FLOAT, false, 8 * sizeof(GLfloat), (void *) (6 * sizeof(GLfloat)));
         glEnableVertexAttribArray(2);
 
-        glUseProgram(shader_program);
-        glUniform1i(glGetUniformLocation(shader_program, "uTex"), 0);
+        gl.use_program(shader_program);
+        glUniform1i(glGetUniformLocation(shader_program.inner(), "uTex"), 0);
 
         bool running = true;
         while (running) {
@@ -140,7 +131,7 @@ int main(int argc, char *argv[]) {
             }
 
             glBindVertexArray(vao);
-            glUseProgram(shader_program);
+            gl.use_program(shader_program);
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
             window.swap_buffers();

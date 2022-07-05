@@ -10,6 +10,7 @@
 
 #include "sdl_session.hpp"
 #include "sdl_window.hpp"
+#include "gl_shader_program.hpp"
 
 GLSession::GLSession(const SdlSession &sdl, const SdlWindow &window, GLConfig config) {
     if (SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, config.major_version) != 0) {
@@ -35,4 +36,8 @@ GLSession::GLSession(const SdlSession &sdl, const SdlWindow &window, GLConfig co
 
 GLSession::~GLSession() noexcept {
     SDL_GL_DeleteContext(gl_context_);
+}
+
+void GLSession::use_program(const GLShaderProgram &program) const {
+    glUseProgram(program.inner());
 }

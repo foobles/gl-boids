@@ -14,6 +14,7 @@ struct GLConfig {
 
 class SdlSession;
 class SdlWindow;
+class GLShaderProgram;
 
 class GLSession {
 public:
@@ -25,6 +26,8 @@ public:
     GLSession(GLSession &&other) = delete;
     GLSession &operator=(GLSession const &other) = delete;
     GLSession &operator=(GLSession &&other) = delete;
+
+    void use_program(GLShaderProgram const &program) const;
 
 private:
     SDL_GLContext gl_context_;
