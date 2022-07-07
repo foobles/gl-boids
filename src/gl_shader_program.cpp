@@ -7,6 +7,131 @@
 #include <stdexcept>
 #include <format>
 
+class GLShaderCompiler {
+public:
+    explicit GLShaderCompiler(GLSession const &gl):
+        program_(glCreateProgram()),
+        vertex_shader_(0),
+        fragment_shader_(0)
+    {}
+
+    ~GLShaderCompiler() noexcept {
+        free_all();
+    }
+
+    GLShaderCompiler(GLShaderCompiler const &other) = delete;
+    GLShaderCompiler(GLShaderCompiler &&other) noexcept:
+        program_(other.program_),
+        vertex_shader_(other.vertex_shader_),
+        fragment_shader_(other.fragment_shader_)
+    {
+        other.make_zero();
+    }
+
+    GLShaderCompiler &operator=(GLShaderCompiler const &other) = delete;
+    GLShaderCompiler &operator=(GLShaderCompiler &&other) noexcept {
+        free_all();
+        program_ = other.program_;
+        vertex_shader_ = other.vertex_shader_;
+        fragment_shader_ = other.fragment_shader_;
+        other.make_zero();
+        return *this;
+    }
+
+    void compile_vertex_shader(std::string_view src) {
+        if (vertex_shader_ != 0) {
+            throw std::runtime_error("Cannot compile vertex shader: vertex shader already exists");
+        }
+        vertex_shader_ = compile_shader(GL_VERTEX_SHADER, "vertex shader", src);
+    }
+
+    void compile_fragment_shader(std::string_view src) {
+        if (fragment_shader_ != 0) {
+            throw std::runtime_error("Cannot compile fragment shader: fragment shader already exists");
+        }
+        fragment_shader_ = compile_shader(GL_FRAGMENT_SHADER, "fragment shader", src);
+    }
+
+    void link() const {
+        glLinkProgram(program_);
+        if (
+            GLint ok;
+            glGetProgramiv(program_, GL_LINK_STATUS, &ok),
+            !ok
+        ) {
+            std::string err_string = "Error linking shader program: ";
+            auto info_offset = err_string.size();
+            GLint info_size;
+            glGetProgramiv(program_, GL_INFO_LOG_LENGTH, &info_size);
+            err_string.resize(err_string.size() + info_size - 1);
+            glGetProgramInfoLog(program_, info_size, nullptr, err_string.data() + info_offset);
+            throw std::runtime_error(err_string);
+        }
+    }
+
+    [[nodiscard]] GLuint into_program() && {
+        GLuint ret = program_;
+        free_shaders();
+        make_zero();
+        return ret;
+    }
+
+private:
+    void make_zero() noexcept {
+        program_ = 0;
+        vertex_shader_ = 0;
+        fragment_shader_ = 0;
+    }
+
+    void free_all() const noexcept {
+        free_shaders();
+        if (program_ != 0) {
+            glDeleteProgram(program_);
+        }
+    }
+
+    void free_shaders() const noexcept {
+        if (vertex_shader_ != 0) {
+            glDetachShader(program_, vertex_shader_);
+            glDeleteShader(vertex_shader_);
+        }
+
+        if (fragment_shader_ != 0) {
+            glDetachShader(program_, fragment_shader_);
+            glDeleteShader(fragment_shader_);
+        }
+    }
+
+    [[nodiscard]] GLuint compile_shader(GLenum shader_type, char const *shader_name, std::string_view src) const {
+        GLuint shader = glCreateShader(shader_type);
+        auto src_data = src.data();
+        auto src_size = static_cast<GLint>(src.size());
+        glShaderSource(shader, 1, &src_data, &src_size);
+        glCompileShader(shader);
+        if (
+            GLint ok;
+            glGetShaderiv(shader, GL_COMPILE_STATUS, &ok),
+            !ok
+        ) {
+            std::string err_string = std::format("Error compiling {} shader: ", shader_name);
+            auto info_offset = err_string.size();
+            GLint info_size;
+            glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &info_size);
+            err_string.resize(err_string.size() + info_size - 1);
+            glGetShaderInfoLog(shader, info_size, nullptr, err_string.data() + info_offset);
+            glDeleteShader(shader);
+            puts("deleting uncompiled shader");
+            throw std::runtime_error(err_string);
+        }
+        glAttachShader(program_, shader);
+        return shader;
+    }
+
+    GLuint program_;
+    GLuint vertex_shader_;
+    GLuint fragment_shader_;
+};
+
 GLShaderProgramBuilder &GLShaderProgramBuilder::vertex_shader(std::string_view src) {
     vertex_shader_src_ = src;
     return *this;
@@ -33,102 +158,18 @@ GLuint GLShaderProgram::inner() const {
     return program_;
 }
 
-class AttachedGLShader {
-public:
-    AttachedGLShader() noexcept:
-        program_(),
-        shader_(0)
-    {}
-
-    AttachedGLShader(GLuint program, GLenum type, char const *shader_name, std::string_view src):
-        program_(program),
-        shader_(glCreateShader(type))
-    {
-        auto src_len = static_cast<GLint>(src.length());
-        auto src_ptr = static_cast<GLchar const *>(src.data());
-        glShaderSource(shader_, 1, &src_ptr, &src_len);
-        glCompileShader(shader_);
-        if (
-            GLint ok;
-            glGetShaderiv(shader_, GL_COMPILE_STATUS, &ok),
-            !ok
-        ) {
-            std::string error_string = std::format("Error compiling {}: ", shader_name);
-            auto info_offset = error_string.size();
-            GLint info_len;
-            glGetShaderiv(shader_, GL_INFO_LOG_LENGTH, &info_len);
-            error_string.resize(error_string.size() + info_len - 1);
-            glGetShaderInfoLog(shader_, info_len, nullptr, error_string.data() + info_offset);
-            glDeleteShader(shader_);
-            throw std::runtime_error(error_string);
-        }
-        glAttachShader(program_, shader_);
+GLShaderProgram::GLShaderProgram(GLSession const &gl, const GLShaderProgramBuilder &builder) {
+    GLShaderCompiler compiler(gl);
+    if (auto src = builder.get_vertex_shader(); !src.empty()) {
+        compiler.compile_vertex_shader(src);
     }
 
-    ~AttachedGLShader() noexcept {
-        delete_current_shader();
+    if (auto src = builder.get_fragment_shader(); !src.empty()) {
+        compiler.compile_fragment_shader(src);
     }
 
-    AttachedGLShader(AttachedGLShader &&other) noexcept:
-        program_(other.program_),
-        shader_(other.shader_)
-    {
-        other.shader_ = 0;
-    }
-
-    AttachedGLShader &operator=(AttachedGLShader &&other) noexcept {
-        delete_current_shader();
-        program_ = other.program_;
-        shader_ = other.shader_;
-        other.shader_ = 0;
-        return *this;
-    }
-
-private:
-    void delete_current_shader() const noexcept {
-        if (shader_ != 0) {
-            glDetachShader(program_, shader_);
-            glDeleteShader(shader_);
-        }
-    }
-
-    GLuint program_;
-    GLuint shader_;
-};
-
-GLShaderProgram::GLShaderProgram(GLSession const &gl, const GLShaderProgramBuilder &builder):
-    program_(glCreateProgram())
-{
-    try {
-        AttachedGLShader vertex_shader;
-        AttachedGLShader fragment_shader;
-
-        if (auto src = builder.get_vertex_shader(); !src.empty()) {
-            vertex_shader = AttachedGLShader(program_, GL_VERTEX_SHADER, "vertex shader", src);
-        }
-
-        if (auto src = builder.get_fragment_shader(); !src.empty()) {
-            fragment_shader = AttachedGLShader(program_, GL_FRAGMENT_SHADER, "fragment shader", src);
-        }
-
-        glLinkProgram(program_);
-        if (
-            GLint ok;
-            glGetProgramiv(program_, GL_LINK_STATUS, &ok),
-            !ok
-        ) {
-            std::string error_string = "Error linking program: ";
-            auto info_offset = error_string.size();
-            GLint info_len;
-            glGetProgramiv(program_, GL_INFO_LOG_LENGTH, &info_len);
-            error_string.resize(error_string.size() + info_len - 1);
-            glGetProgramInfoLog(program_, info_len, nullptr, error_string.data() + info_offset);
-            throw std::runtime_error(error_string);
-        }
-    } catch (...) {
-        glDeleteProgram(program_);
-        throw;
-    }
+    compiler.link();
+    program_ = std::move(compiler).into_program();
 }
 
 GLShaderProgram::~GLShaderProgram() noexcept {
