@@ -6,6 +6,7 @@
 #define SDL_GLEW_TEST_SDL_WINDOW_HPP
 
 struct SDL_Window;
+struct SDL_Renderer;
 class GLSession;
 class SdlSession;
 
@@ -27,6 +28,8 @@ public:
     SdlWindow &operator=(SdlWindow &&other) = delete;
 
     [[nodiscard]] SDL_Window *inner() const noexcept;
+
+    [[nodiscard]] float aspect_ratio() const noexcept;
 
     void swap_buffers() const;
 private:

@@ -1,3 +1,4 @@
+#include <numbers>
 #include <stdexcept>
 
 #include "GL/glew.h"
@@ -10,26 +11,25 @@
 #include "gl_session.hpp"
 #include "sdl_image_loader.hpp"
 #include "gl_shader_program.hpp"
+#include "linear_algebra.hpp"
 
 char const *VERTEX_SHADER_SOURCE = R"(
     #version 330 core
     layout (location = 0) in vec3 aPos;
-    layout (location = 1) in vec3 aColor;
-    layout (location = 2) in vec2 aTexCoord;
+    layout (location = 1) in vec2 aTexCoord;
 
-    out vec3 vertexColor;
     out vec2 texCoord;
 
+    uniform mat4 uPerspective;
+
     void main() {
-        gl_Position = vec4(aPos, 1.0);
-        vertexColor = aColor;
+        gl_Position = vec4(aPos, 1.0) * uPerspective;
         texCoord = aTexCoord;
     }
 )";
 
 char const *FRAGMENT_SHADER_SOURCE = R"(
     #version 330 core
-    in vec3 vertexColor;
     in vec2 texCoord;
 
     out vec4 fragColor;
@@ -78,11 +78,11 @@ int main(int argc, char *argv[]) {
 
 
         GLfloat vertices[] = {
-                // positions          // colors           // texture coords
-                 0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // top right
-                 0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // bottom right
-                -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
-                -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left
+                // positions            // texture coords
+                 4.0f, -2.0f, -13.0f,   1.0f, 1.0f,   // top right
+                 4.0f, -2.0f, -5.0f,    1.0f, 0.0f,   // bottom right
+                -4.0f, -2.0f, -5.0f,    0.0f, 0.0f,   // bottom left
+                -4.0f, -2.0f, -13.0f,   0.0f, 1.0f,   // top left
         };
 
         GLuint indices[] = {
@@ -106,17 +106,19 @@ int main(int argc, char *argv[]) {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, 8 * sizeof(GLfloat), (void *) (0 * sizeof(GLfloat)));
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, 5 * sizeof(GLfloat), (void *) (0 * sizeof(GLfloat)));
         glEnableVertexAttribArray(0);
 
-        glVertexAttribPointer(1, 3, GL_FLOAT, false, 8 * sizeof(GLfloat), (void *) (3 * sizeof(GLfloat)));
+        glVertexAttribPointer(1, 2, GL_FLOAT, false, 5 * sizeof(GLfloat), (void *) (3 * sizeof(GLfloat)));
         glEnableVertexAttribArray(1);
-
-        glVertexAttribPointer(2, 2, GL_FLOAT, false, 8 * sizeof(GLfloat), (void *) (6 * sizeof(GLfloat)));
-        glEnableVertexAttribArray(2);
 
         gl.use_program(shader_program);
         glUniform1i(glGetUniformLocation(shader_program.inner(), "uTex"), 0);
+
+        auto fov_degrees = 80.0f;
+        auto fov_radians = fov_degrees * std::numbers::pi_v<GLfloat> / 180.0f;
+        auto perspective = perspective_mat4<GLfloat>(fov_radians, window.aspect_ratio(), 0.1, 100.0);
+        glUniformMatrix4fv(glGetUniformLocation(shader_program.inner(), "uPerspective"), 1, true, perspective.data());
 
         bool running = true;
         while (running) {

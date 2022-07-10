@@ -33,3 +33,11 @@ void SdlWindow::swap_buffers() const  {
 SDL_Window *SdlWindow::inner() const noexcept {
     return window_;
 }
+
+float SdlWindow::aspect_ratio() const noexcept {
+    int width;
+    int height;
+    SDL_GetWindowSize(window_, &width, &height);
+    return static_cast<float>(width)/static_cast<float>(height);
+}
+

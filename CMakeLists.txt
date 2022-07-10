@@ -21,7 +21,8 @@ set(SOURCE_HEADERS
         src/sdl_window.hpp
         src/gl_session.hpp
         src/sdl_image_loader.hpp
-        src/gl_shader_program.hpp)
+        src/gl_shader_program.hpp
+        src/linear_algebra.hpp)
 
 add_executable(SDL_Glew_Test ${SOURCES} ${SOURCE_HEADERS})
 target_include_directories(SDL_Glew_Test PUBLIC ${SDL2_INCLUDE_DIRS} ${SDL2_IMAGE_INCLUDE_DIRS} ${GLEW_INCLUDE_DIRS})
