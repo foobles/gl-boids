@@ -194,6 +194,17 @@ GLuint GLShaderProgram::into_inner() && {
     return ret;
 }
 
+
+std::optional<GLint> GLShaderProgram::uniform_location(const char *uniform) const {
+    GLint location = glGetUniformLocation(program_, uniform);
+    if (location != -1) {
+        return location;
+    } else {
+        return std::nullopt;
+    }
+}
+
+
 void GLShaderProgram::delete_current_program() const noexcept {
     if (program_ != 0) {
         glDeleteProgram(program_);

@@ -5,8 +5,8 @@
 #ifndef SDL_GLEW_TEST_GL_SHADER_PROGRAM_HPP
 #define SDL_GLEW_TEST_GL_SHADER_PROGRAM_HPP
 
-#include <array>
 #include <string_view>
+#include <optional>
 #include "GL/glew.h"
 
 
@@ -26,6 +26,8 @@ public:
 
     [[nodiscard]] GLuint inner() const;
     [[nodiscard]] GLuint into_inner() &&;
+
+    [[nodiscard]] std::optional<GLint> uniform_location(char const *uniform) const;
 
 private:
     void delete_current_program() const noexcept;

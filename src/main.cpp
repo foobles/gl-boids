@@ -96,8 +96,7 @@ int main(int argc, char *argv[]) {
         GLuint buffers[2];
         glGenBuffers(2, buffers);
 
-        GLuint vbo = buffers[0];
-        GLuint ebo = buffers[1];
+        auto [vbo, ebo] = buffers;
 
         glBindVertexArray(vao);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -113,12 +112,12 @@ int main(int argc, char *argv[]) {
         glEnableVertexAttribArray(1);
 
         gl.use_program(shader_program);
-        glUniform1i(glGetUniformLocation(shader_program.inner(), "uTex"), 0);
+        glUniform1i(*shader_program.uniform_location("uTex"), 0);
 
         auto fov_degrees = 80.0f;
         auto fov_radians = fov_degrees * std::numbers::pi_v<GLfloat> / 180.0f;
         auto perspective = perspective_mat4<GLfloat>(fov_radians, window.aspect_ratio(), 0.1, 100.0);
-        glUniformMatrix4fv(glGetUniformLocation(shader_program.inner(), "uPerspective"), 1, true, perspective.data());
+        glUniformMatrix4fv(*shader_program.uniform_location("uPerspective"), 1, true, perspective.data());
 
         bool running = true;
         while (running) {
