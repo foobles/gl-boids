@@ -20,10 +20,11 @@ char const *VERTEX_SHADER_SOURCE = R"(
 
     out vec2 texCoord;
 
+    uniform mat4 uModel;
     uniform mat4 uPerspective;
 
     void main() {
-        gl_Position = vec4(aPos, 1.0) * uPerspective;
+        gl_Position = vec4(aPos, 1.0) * uModel * uPerspective;
         texCoord = aTexCoord;
     }
 )";
@@ -78,11 +79,11 @@ int main(int argc, char *argv[]) {
 
 
         GLfloat vertices[] = {
-                // positions            // texture coords
-                 4.0f, -2.0f, -13.0f,   1.0f, 1.0f,   // top right
-                 4.0f, -2.0f, -5.0f,    1.0f, 0.0f,   // bottom right
-                -4.0f, -2.0f, -5.0f,    0.0f, 0.0f,   // bottom left
-                -4.0f, -2.0f, -13.0f,   0.0f, 1.0f,   // top left
+                // positions           // texture coords
+                 4.0f, 0.0f, -13.0f,   1.0f, 1.0f,   // top right
+                 4.0f, 0.0f, -5.0f,    1.0f, 0.0f,   // bottom right
+                -4.0f, 0.0f, -5.0f,    0.0f, 0.0f,   // bottom left
+                -4.0f, 0.0f, -13.0f,   0.0f, 1.0f,   // top left
         };
 
         GLuint indices[] = {
@@ -116,7 +117,7 @@ int main(int argc, char *argv[]) {
 
         auto fov_degrees = 80.0f;
         auto fov_radians = fov_degrees * std::numbers::pi_v<GLfloat> / 180.0f;
-        auto perspective = perspective_mat4<GLfloat>(fov_radians, window.aspect_ratio(), 0.1, 100.0);
+        auto perspective = Mat4<GLfloat>::perspective(fov_radians, window.aspect_ratio(), 0.1, 100.0);
         glUniformMatrix4fv(*shader_program.uniform_location("uPerspective"), 1, true, perspective.data());
 
         bool running = true;
@@ -130,6 +131,12 @@ int main(int argc, char *argv[]) {
                     }
                 }
             }
+
+            glClear(GL_COLOR_BUFFER_BIT);
+
+            GLfloat height = std::sin(static_cast<GLfloat>(SDL_GetTicks()) * std::numbers::pi_v<GLfloat> / 5000.0f) * 5.0f;
+            auto model = Mat4<GLfloat>::identity().translate(0, height, 0);
+            glUniformMatrix4fv(*shader_program.uniform_location("uModel"), 1, true, model.data());
 
             glBindVertexArray(vao);
             gl.use_program(shader_program);
