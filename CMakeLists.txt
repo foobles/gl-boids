@@ -12,17 +12,18 @@ set(SOURCES
         src/main.cpp
         src/sdl_session.cpp
         src/sdl_window.cpp
-        src/gl_session.cpp
         src/sdl_image_loader.cpp
+        src/gl_session.cpp
         src/gl_shader_program.cpp)
 
 set(SOURCE_HEADERS
         src/sdl_session.hpp
         src/sdl_window.hpp
-        src/gl_session.hpp
         src/sdl_image_loader.hpp
+        src/gl_session.hpp
         src/gl_shader_program.hpp
-        src/linear_algebra.hpp)
+        src/mat4.hpp
+        src/vec3.hpp)
 
 add_executable(SDL_Glew_Test ${SOURCES} ${SOURCE_HEADERS})
 target_include_directories(SDL_Glew_Test PUBLIC ${SDL2_INCLUDE_DIRS} ${SDL2_IMAGE_INCLUDE_DIRS} ${GLEW_INCLUDE_DIRS})

@@ -2,8 +2,10 @@
 // Created by foobles on 7/7/2022.
 //
 
-#ifndef SDL_GLEW_TEST_LINEAR_ALGEBRA_HPP
-#define SDL_GLEW_TEST_LINEAR_ALGEBRA_HPP
+#ifndef SDL_GLEW_TEST_MAT4_HPP
+#define SDL_GLEW_TEST_MAT4_HPP
+
+#include "vec3.hpp"
 
 #include <array>
 #include <cmath>
@@ -13,16 +15,16 @@ class Mat4 {
 public:
     constexpr Mat4(std::array<T, 16> arr) noexcept;
 
-    constexpr T const &get(int col, int row) const noexcept;
-    constexpr T &get(int col, int row) noexcept;
+    [[nodiscard]] constexpr T const &get(int col, int row) const noexcept;
+    [[nodiscard]] constexpr T &get(int col, int row) noexcept;
 
-    constexpr T const *data() const noexcept;
-    constexpr T *data() noexcept;
+    [[nodiscard]] constexpr T const *data() const noexcept;
+    [[nodiscard]] constexpr T *data() noexcept;
 
-    constexpr Mat4 translate(T dx, T dy, T dz) const noexcept;
+    [[nodiscard]] constexpr Mat4 translate(T dx, T dy, T dz) const noexcept;
 
-    constexpr static Mat4 perspective(T fov, T ar, T clip_near, T clip_far) noexcept;
-    constexpr static Mat4 identity() noexcept;
+    [[nodiscard]] constexpr static Mat4 perspective(T fov, T ar, T clip_near, T clip_far) noexcept;
+    [[nodiscard]] constexpr static Mat4 identity() noexcept;
 private:
     std::array<T, 16> arr_;
 };
@@ -99,4 +101,4 @@ constexpr Mat4<T> Mat4<T>::perspective(T fov, T ar, T clip_near, T clip_far) noe
     }};
 }
 
-#endif //SDL_GLEW_TEST_LINEAR_ALGEBRA_HPP
+#endif //SDL_GLEW_TEST_MAT4_HPP

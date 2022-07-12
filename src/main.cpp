@@ -1,4 +1,5 @@
 #include <numbers>
+#include <cmath>
 #include <stdexcept>
 
 #include "GL/glew.h"
@@ -8,10 +9,10 @@
 
 #include "sdl_session.hpp"
 #include "sdl_window.hpp"
-#include "gl_session.hpp"
 #include "sdl_image_loader.hpp"
+#include "gl_session.hpp"
 #include "gl_shader_program.hpp"
-#include "linear_algebra.hpp"
+#include "mat4.hpp"
 
 char const *VERTEX_SHADER_SOURCE = R"(
     #version 330 core
