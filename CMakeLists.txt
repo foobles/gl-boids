@@ -23,7 +23,7 @@ set(SOURCE_HEADERS
         src/gl_session.hpp
         src/gl_shader_program.hpp
         src/mat4.hpp
-        src/vec3.hpp)
+        src/vec4.hpp)
 
 add_executable(SDL_Glew_Test ${SOURCES} ${SOURCE_HEADERS})
 target_include_directories(SDL_Glew_Test PUBLIC ${SDL2_INCLUDE_DIRS} ${SDL2_IMAGE_INCLUDE_DIRS} ${GLEW_INCLUDE_DIRS})

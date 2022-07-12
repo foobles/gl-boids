@@ -5,7 +5,7 @@
 #ifndef SDL_GLEW_TEST_MAT4_HPP
 #define SDL_GLEW_TEST_MAT4_HPP
 
-#include "vec3.hpp"
+#include "vec4.hpp"
 
 #include <array>
 #include <cmath>
@@ -13,7 +13,7 @@
 template<typename T>
 class Mat4 {
 public:
-    constexpr Mat4(std::array<T, 16> arr) noexcept;
+    constexpr Mat4(std::array<T, 16> const &arr) noexcept;
 
     [[nodiscard]] constexpr T const &get(int col, int row) const noexcept;
     [[nodiscard]] constexpr T &get(int col, int row) noexcept;
@@ -30,7 +30,7 @@ private:
 };
 
 template<typename T>
-constexpr Mat4<T>::Mat4(std::array<T, 16> arr) noexcept:
+constexpr Mat4<T>::Mat4(std::array<T, 16> const &arr) noexcept:
     arr_(arr)
 {}
 
@@ -74,6 +74,19 @@ constexpr Mat4<T> operator*(Mat4<T> a, Mat4<T> b) noexcept {
             }
             ret.get(x, y) = acc;
         }
+    }
+    return ret;
+}
+
+template<typename T>
+constexpr Vec4<T> operator*(Vec4<T> a, Mat4<T> b) noexcept {
+    Vec4<T> ret{{}};
+    for (int x = 0; x < 4; ++x) {
+        T acc = 0;
+        for (int i = 0; i < 4; ++i) {
+            acc += a[i] * b.get(x, i);
+        }
+        ret[x] = acc;
     }
     return ret;
 }
