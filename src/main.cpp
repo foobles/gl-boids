@@ -14,6 +14,8 @@
 #include "gl_shader_program.hpp"
 #include "mat4.hpp"
 
+#include "obj.hpp"
+
 char const *VERTEX_SHADER_SOURCE = R"(
     #version 330 core
     layout (location = 0) in vec3 aPos;
@@ -147,9 +149,12 @@ int main(int argc, char *argv[]) {
 
             SDL_Delay(1000 / 60);
         }
+
     } catch(std::runtime_error const &err) {
         SDL_Log(err.what());
         return 1;
     }
+
+
     return 0;
 }
