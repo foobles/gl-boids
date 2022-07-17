@@ -109,8 +109,8 @@ constexpr Mat4<T> Mat4<T>::perspective(T fov, T ar, T clip_near, T clip_far) noe
     return {{
         xy_scale, 0,             0,            0,
         0,        xy_scale * ar, 0,            0,
-        0,        0,             (n+f)/(f-n), -1,
-        0,        0,             2*n*f/(f-n),  0
+        0,        0,             (n+f)/(n-f), -1,
+        0,        0,             2*n*f/(n-f),  0
     }};
 }
 
