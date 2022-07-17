@@ -14,7 +14,7 @@
 #include "gl_shader_program.hpp"
 #include "mat4.hpp"
 
-#include "obj.hpp"
+#include "obj_format.hpp"
 #include "model.hpp"
 
 char const *VERTEX_SHADER_SOURCE = R"(

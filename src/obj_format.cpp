@@ -2,7 +2,7 @@
 // Created by foobles on 7/11/2022.
 //
 
-#include "obj.hpp"
+#include "obj_format.hpp"
 
 #include <stdexcept>
 #include <algorithm>
@@ -71,7 +71,7 @@ public:
         next_token_len_ = tok_end - tok_begin;
     }
 
-    ParseResult parse(Obj &out) {
+    ParseResult parse(ObjFormat &out) {
         while (load_next_line()) {
             auto peek = next_token();
             if (peek.empty() || peek[0] == '#') {
@@ -99,7 +99,7 @@ public:
         return Ok;
     }
 
-    ParseResult parse_v(Obj &out) {
+    ParseResult parse_v(ObjFormat &out) {
         if (!parse_token_keyword("v")) {
             return NoMatch;
         }
@@ -125,12 +125,12 @@ public:
         return Ok;
     }
 
-    ParseResult parse_vt(Obj &out) {
+    ParseResult parse_vt(ObjFormat &out) {
         if (!parse_token_keyword("vt")) {
             return NoMatch;
         }
 
-        Obj::TexCoord uv{};
+        ObjFormat::TexCoord uv{};
         if (!parse_token_float(uv.x)) {
             return Error;
         }
@@ -147,14 +147,14 @@ public:
         return Ok;
     }
 
-    ParseResult parse_f(Obj &out) {
+    ParseResult parse_f(ObjFormat &out) {
         if (!parse_token_keyword("f")) {
             return NoMatch;
         }
 
-        std::vector<Obj::FaceVertex> face_vertices;
+        std::vector<ObjFormat::FaceVertex> face_vertices;
         for (auto peek = next_token(); !peek.empty(); peek = next_token()) {
-            Obj::FaceVertex fv = {.v_idx = 0, .vt_idx = std::nullopt, .vn_idx = std::nullopt};
+            ObjFormat::FaceVertex fv = {.v_idx = 0, .vt_idx = std::nullopt, .vn_idx = std::nullopt};
             if (!parse_token_face_vertex(fv)) {
                 return Error;
             }
@@ -179,7 +179,7 @@ public:
         return true;
     }
 
-    bool parse_token_face_vertex(Obj::FaceVertex &out) {
+    bool parse_token_face_vertex(ObjFormat::FaceVertex &out) {
         auto peek = next_token();
         auto first_slash = std::find(peek.cbegin(), peek.cend(), '/');
         std::string_view first_number = {peek.cbegin(), first_slash};
@@ -230,7 +230,7 @@ private:
     int next_token_len_ = 0;
 };
 
-Obj::Obj(char const *path):
+ObjFormat::ObjFormat(char const *path):
     v{},
     vt{},
     f{}

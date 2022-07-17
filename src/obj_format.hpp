@@ -2,15 +2,14 @@
 // Created by foobles on 7/11/2022.
 //
 
-#ifndef SDL_GLEW_TEST_OBJ_HPP
-#define SDL_GLEW_TEST_OBJ_HPP
+#ifndef SDL_GLEW_TEST_OBJ_FORMAT_HPP
+#define SDL_GLEW_TEST_OBJ_FORMAT_HPP
 
 #include "vec4.hpp"
 #include <vector>
 #include <optional>
 
-class ObjParser;
-class Obj {
+class ObjFormat {
 public:
     struct FaceVertex {
         int v_idx{};
@@ -27,11 +26,11 @@ public:
         float y;
     };
 
-    explicit Obj(char const *path);
+    explicit ObjFormat(char const *path);
 
     std::vector<Vec4<float>> v;
     std::vector<TexCoord> vt;
     std::vector<Face> f;
 };
 
-#endif //SDL_GLEW_TEST_OBJ_HPP
+#endif //SDL_GLEW_TEST_OBJ_FORMAT_HPP

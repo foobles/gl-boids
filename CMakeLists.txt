@@ -20,7 +20,7 @@ set(SOURCES
         src/sdl_image_loader.cpp
         src/gl_session.cpp
         src/gl_shader_program.cpp
-        src/obj.hpp)
+        src/obj_format.hpp)
 
 set(SOURCE_HEADERS
         src/sdl_session.hpp
@@ -28,7 +28,7 @@ set(SOURCE_HEADERS
         src/sdl_image_loader.hpp
         src/gl_session.hpp
         src/gl_shader_program.hpp
-        src/obj.cpp
+        src/obj_format.cpp
         src/mat4.hpp
         src/vec4.hpp src/model.hpp src/model.cpp)
 
