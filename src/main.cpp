@@ -25,10 +25,10 @@ char const *VERTEX_SHADER_SOURCE = R"(
     out vec2 texCoord;
 
     uniform mat4 uModel;
-    uniform mat4 uPerspective;
+    uniform mat4 uProjection;
 
     void main() {
-        gl_Position = vec4(aPos, 1.0) * uModel * uPerspective;
+        gl_Position = vec4(aPos, 1.0) * uModel * uProjection;
         texCoord = aTexCoord;
     }
 )";
@@ -114,7 +114,7 @@ int main(int argc, char *argv[]) {
         auto fov_degrees = 80.0f;
         auto fov_radians = fov_degrees * std::numbers::pi_v<GLfloat> / 180.0f;
         auto perspective = Mat4<GLfloat>::perspective(fov_radians, window.aspect_ratio(), 0.1, 100.0);
-        glUniformMatrix4fv(*shader_program.uniform_location("uPerspective"), 1, true, perspective.data());
+        glUniformMatrix4fv(*shader_program.uniform_location("uProjection"), 1, true, perspective.data());
 
         bool running = true;
         while (running) {
