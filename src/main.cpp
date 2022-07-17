@@ -15,6 +15,7 @@
 #include "mat4.hpp"
 
 #include "obj.hpp"
+#include "model.hpp"
 
 char const *VERTEX_SHADER_SOURCE = R"(
     #version 330 core
@@ -81,12 +82,23 @@ int main(int argc, char *argv[]) {
         SDL_FreeSurface(rgb_img);
 
 
-        GLfloat vertices[] = {
-                // positions           // texture coords
-                 4.0f, 0.0f, -13.0f,   1.0f, 1.0f,   // top right
-                 4.0f, 0.0f, -5.0f,    1.0f, 0.0f,   // bottom right
-                -4.0f, 0.0f, -5.0f,    0.0f, 0.0f,   // bottom left
-                -4.0f, 0.0f, -13.0f,   0.0f, 1.0f,   // top left
+        Model::Vertex vertices[] = {
+            {
+                .pos = {4.0f, 0.0f, -13.0f},
+                .uv = {1.0f, 1.0f},
+            },
+            {
+                .pos = {4.0f, 0.0f, -5.0f},
+                .uv = {1.0f, 0.0f}
+            },
+            {
+                .pos = {-4.0f, 0.0f, -5.0f},
+                .uv = {0.0f, 0.0f}
+            },
+            {
+                .pos = {-4.0f, 0.0f, -13.0f},
+                .uv = {0.0f, 1.0f}
+            },
         };
 
         GLuint indices[] = {
@@ -94,26 +106,7 @@ int main(int argc, char *argv[]) {
                 1, 2, 3
         };
 
-        GLuint vao;
-        glGenVertexArrays(1, &vao);
-
-        GLuint buffers[2];
-        glGenBuffers(2, buffers);
-
-        auto [vbo, ebo] = buffers;
-
-        glBindVertexArray(vao);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, 5 * sizeof(GLfloat), (void *) (0 * sizeof(GLfloat)));
-        glEnableVertexAttribArray(0);
-
-        glVertexAttribPointer(1, 2, GL_FLOAT, false, 5 * sizeof(GLfloat), (void *) (3 * sizeof(GLfloat)));
-        glEnableVertexAttribArray(1);
+        Model model(vertices, indices);
 
         gl.use_program(shader_program);
         glUniform1i(*shader_program.uniform_location("uTex"), 0);
@@ -138,12 +131,11 @@ int main(int argc, char *argv[]) {
             glClear(GL_COLOR_BUFFER_BIT);
 
             GLfloat height = std::sin(static_cast<GLfloat>(SDL_GetTicks()) * std::numbers::pi_v<GLfloat> / 5000.0f) * 5.0f;
-            auto model = Mat4<GLfloat>::identity().translate(0, height, 0);
-            glUniformMatrix4fv(*shader_program.uniform_location("uModel"), 1, true, model.data());
+            auto model_transform = Mat4<GLfloat>::identity().translate(0, height, 0);
+            glUniformMatrix4fv(*shader_program.uniform_location("uModel"), 1, true, model_transform.data());
 
-            glBindVertexArray(vao);
             gl.use_program(shader_program);
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+            model.draw();
 
             window.swap_buffers();
 
