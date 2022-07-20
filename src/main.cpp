@@ -81,32 +81,7 @@ int main(int argc, char *argv[]) {
         glGenerateMipmap(GL_TEXTURE_2D);
         SDL_FreeSurface(rgb_img);
 
-
-        Model::Vertex vertices[] = {
-            {
-                .pos = {4.0f, 0.0f, -13.0f},
-                .uv = {1.0f, 1.0f},
-            },
-            {
-                .pos = {4.0f, 0.0f, -5.0f},
-                .uv = {1.0f, 0.0f}
-            },
-            {
-                .pos = {-4.0f, 0.0f, -5.0f},
-                .uv = {0.0f, 0.0f}
-            },
-            {
-                .pos = {-4.0f, 0.0f, -13.0f},
-                .uv = {0.0f, 1.0f}
-            },
-        };
-
-        GLuint indices[] = {
-                0, 1, 3,
-                1, 2, 3
-        };
-
-        Model model(vertices, indices);
+        Model model = ObjFormat("assets/square.obj").create_model();
 
         gl.use_program(shader_program);
         glUniform1i(*shader_program.uniform_location("uTex"), 0);
@@ -131,7 +106,7 @@ int main(int argc, char *argv[]) {
             glClear(GL_COLOR_BUFFER_BIT);
 
             GLfloat height = std::sin(static_cast<GLfloat>(SDL_GetTicks()) * std::numbers::pi_v<GLfloat> / 5000.0f) * 5.0f;
-            auto model_transform = Mat4<GLfloat>::identity().translate(0, height, 0);
+            auto model_transform = Mat4<GLfloat>::identity().translate(0, height, -8.0);
             glUniformMatrix4fv(*shader_program.uniform_location("uModel"), 1, true, model_transform.data());
 
             gl.use_program(shader_program);

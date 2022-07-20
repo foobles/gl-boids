@@ -11,6 +11,9 @@
 #include <cstdio>
 #include <cctype>
 #include <charconv>
+#include <unordered_map>
+#include <cmath>
+#include <cstdint>
 
 enum class ParseResult {
     Ok,
@@ -239,4 +242,55 @@ ObjFormat::ObjFormat(char const *path):
     if (parser.parse(*this) != Ok) {
         throw std::runtime_error(std::format("Error parsing line: {}", parser.cur_line()));
     }
+}
+
+#if SIZE_MAX == (1 << 16) - 1
+constexpr std::size_t HASH_CONSTANT = 0x9E'3Bu;
+#elif SIZE_MAX == (1 << 32) - 1
+constexpr std::size_t HASH_CONSTANT = 0x9E'37'79'B1u;
+#elif SIZE_MAX == (1 << 64) - 1
+constexpr std::size_t HASH_CONSTANT = 0x9E'37'79'B9'7F'4A'7B'B9u;
+#endif
+
+
+struct FaceVertexHasher {
+    std::size_t operator()(ObjFormat::FaceVertex fv) const {
+        std::size_t ret = fv.v_idx * HASH_CONSTANT;
+        ret = (ret + fv.vt_idx.value_or(0)) * HASH_CONSTANT;
+        ret = (ret + fv.vn_idx.value_or(0)) * HASH_CONSTANT;
+        return ret;
+    }
+};
+
+Model ObjFormat::create_model() const {
+    std::unordered_map<FaceVertex, int, FaceVertexHasher> index_map = {};
+    std::vector<Model::Vertex> vertices = {};
+    std::vector<GLuint> indices = {};
+
+    auto gen_vertex_idx = [&](FaceVertex fv) -> int {
+        auto [it, inserted] = index_map.try_emplace(fv, vertices.size());
+        if (inserted) {
+            auto pos = v[fv.v_idx - 1];
+            auto uv = fv.vt_idx? vt[*fv.vt_idx - 1] : TexCoord{0.0, 0.0};
+            vertices.push_back({pos[0], pos[1], pos[2], uv.x, uv.y});
+        }
+        return it->second;
+    };
+
+    for (auto const &face : f) {
+        int root_idx = gen_vertex_idx(face.vertices[0]);
+        int prev_idx = gen_vertex_idx(face.vertices[1]);
+
+        for (auto it = face.vertices.begin() + 2; it != face.vertices.end(); ++it) {
+            int cur_idx = gen_vertex_idx(*it);
+
+            indices.push_back(root_idx);
+            indices.push_back(prev_idx);
+            indices.push_back(cur_idx);
+
+            prev_idx = cur_idx;
+        }
+    }
+
+    return {vertices, indices};
 }
