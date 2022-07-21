@@ -262,9 +262,9 @@ struct FaceVertexHasher {
     }
 };
 
-Model ObjFormat::create_model() const {
+Mesh ObjFormat::create_mesh() const {
     std::unordered_map<FaceVertex, int, FaceVertexHasher> index_map = {};
-    std::vector<Model::Vertex> vertices = {};
+    std::vector<Mesh::Vertex> vertices = {};
     std::vector<GLuint> indices = {};
 
     auto gen_vertex_idx = [&](FaceVertex fv) -> int {

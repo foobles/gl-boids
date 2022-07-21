@@ -2,22 +2,22 @@
 // Created by foobles on 7/16/2022.
 //
 
-#ifndef SDL_GLEW_TEST_MODEL_HPP
-#define SDL_GLEW_TEST_MODEL_HPP
+#ifndef SDL_GLEW_TEST_MESH_HPP
+#define SDL_GLEW_TEST_MESH_HPP
 
 #include <span>
 
 #include "GL/glew.h"
 
-class Model {
+class Mesh {
 public:
     struct Vertex {
         GLfloat pos[3];
         GLfloat uv[2];
     };
 
-    Model(std::span<Vertex> vertex_data, std::span<GLuint> element_data);
-    ~Model() noexcept;
+    Mesh(std::span<Vertex> vertex_data, std::span<GLuint> element_data);
+    ~Mesh() noexcept;
 
     void draw() const;
 
@@ -28,4 +28,4 @@ private:
     GLint vertex_count;
 };
 
-#endif //SDL_GLEW_TEST_MODEL_HPP
+#endif //SDL_GLEW_TEST_MESH_HPP

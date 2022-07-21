@@ -15,7 +15,7 @@
 #include "mat4.hpp"
 
 #include "obj_format.hpp"
-#include "model.hpp"
+#include "mesh.hpp"
 
 char const *VERTEX_SHADER_SOURCE = R"(
     #version 330 core
@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
         glGenerateMipmap(GL_TEXTURE_2D);
         SDL_FreeSurface(rgb_img);
 
-        Model model = ObjFormat("assets/square.obj").create_model();
+        Mesh model = ObjFormat("assets/square.obj").create_mesh();
 
         gl.use_program(shader_program);
         glUniform1i(*shader_program.uniform_location("uTex"), 0);

@@ -2,10 +2,10 @@
 // Created by foobles on 7/16/2022.
 //
 
-#include "model.hpp"
+#include "mesh.hpp"
 #include <cstddef>
 
-Model::Model(std::span<Vertex> vertex_data, std::span<GLuint> element_data) {
+Mesh::Mesh(std::span<Vertex> vertex_data, std::span<GLuint> element_data) {
     vertex_count = static_cast<GLint>(element_data.size());
 
     glGenVertexArrays(1, &vertex_array);
@@ -26,12 +26,12 @@ Model::Model(std::span<Vertex> vertex_data, std::span<GLuint> element_data) {
     glEnableVertexAttribArray(1);
 }
 
-Model::~Model() noexcept {
+Mesh::~Mesh() noexcept {
     glDeleteBuffers(2, buffers);
     glDeleteVertexArrays(1, &vertex_array);
 }
 
-void Model::draw() const {
+void Mesh::draw() const {
     glBindVertexArray(vertex_array);
     glDrawElements(GL_TRIANGLES, vertex_count, GL_UNSIGNED_INT, nullptr);
 }

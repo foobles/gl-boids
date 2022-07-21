@@ -7,7 +7,7 @@
 
 #include <vector>
 #include <optional>
-#include "model.hpp"
+#include "mesh.hpp"
 #include "vec4.hpp"
 
 class ObjFormat {
@@ -31,7 +31,7 @@ public:
 
     explicit ObjFormat(char const *path);
 
-    [[nodiscard]] Model create_model() const;
+    [[nodiscard]] Mesh create_mesh() const;
 
     std::vector<Vec4<float>> v;
     std::vector<TexCoord> vt;
