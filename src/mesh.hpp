@@ -22,8 +22,8 @@ public:
     void draw() const;
 
 private:
-    GLuint vertex_array;
-    GLuint buffers[2];
+    GLuint array_buffer;
+    GLuint element_array_buffer;
 
     GLint vertex_count;
 };

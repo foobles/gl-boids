@@ -91,6 +91,14 @@ int main(int argc, char *argv[]) {
         auto perspective = Mat4<GLfloat>::perspective(fov_radians, window.aspect_ratio(), 0.1, 100.0);
         glUniformMatrix4fv(*shader_program.uniform_location("uProjection"), 1, true, perspective.data());
 
+        GLuint vao;
+        glGenVertexArrays(1, &vao);
+        glBindVertexArray(vao);
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(Mesh::Vertex), reinterpret_cast<void const*>(offsetof(Mesh::Vertex, pos)));
+        glVertexAttribPointer(1, 2, GL_FLOAT, false, sizeof(Mesh::Vertex), reinterpret_cast<void const*>(offsetof(Mesh::Vertex, uv)));
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+
         bool running = true;
         while (running) {
             SDL_Event e;

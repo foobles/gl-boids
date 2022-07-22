@@ -3,35 +3,29 @@
 //
 
 #include "mesh.hpp"
-#include <cstddef>
 
 Mesh::Mesh(std::span<Vertex> vertex_data, std::span<GLuint> element_data) {
     vertex_count = static_cast<GLint>(element_data.size());
 
-    glGenVertexArrays(1, &vertex_array);
+    GLuint buffers[2];
     glGenBuffers(2, buffers);
-    auto [vertex_buffer, element_buffer] = buffers;
+    array_buffer = buffers[0];
+    element_array_buffer = buffers[1];
 
-    glBindVertexArray(vertex_array);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, array_buffer);
     glBufferData(GL_ARRAY_BUFFER, static_cast<GLint>(vertex_data.size_bytes()), vertex_data.data(), GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_array_buffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLint>(element_data.size_bytes()), element_data.data(), GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, pos)));
-    glVertexAttribPointer(1, 2, GL_FLOAT, false, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, uv)));
-
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
 }
 
 Mesh::~Mesh() noexcept {
+    GLuint buffers[2] = {array_buffer, element_array_buffer};
     glDeleteBuffers(2, buffers);
-    glDeleteVertexArrays(1, &vertex_array);
 }
 
 void Mesh::draw() const {
-    glBindVertexArray(vertex_array);
+    glBindBuffer(GL_ARRAY_BUFFER, array_buffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_array_buffer);
     glDrawElements(GL_TRIANGLES, vertex_count, GL_UNSIGNED_INT, nullptr);
 }
