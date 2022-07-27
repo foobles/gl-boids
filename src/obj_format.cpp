@@ -143,7 +143,13 @@ public:
         }
 
         if (!next_token().empty()) {
-            return Error;
+            float z;
+            if (!parse_token_float(z)) {
+                return Error;
+            }
+            if (z != 0 || !next_token().empty()) {
+                return Error;
+            }
         }
 
         out.vt.push_back(uv);
