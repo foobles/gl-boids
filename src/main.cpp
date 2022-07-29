@@ -12,7 +12,8 @@
 #include "sdl_image_loader.hpp"
 #include "gl_session.hpp"
 #include "gl_shader_program.hpp"
-#include "mat4.hpp"
+#include "matrix.hpp"
+#include "transform.hpp"
 
 #include "obj_format.hpp"
 #include "mesh.hpp"
@@ -88,8 +89,8 @@ int main(int argc, char *argv[]) {
 
         auto fov_degrees = 80.0f;
         auto fov_radians = fov_degrees * std::numbers::pi_v<GLfloat> / 180.0f;
-        auto perspective = Mat4<GLfloat>::perspective(fov_radians, window.aspect_ratio(), 0.1, 100.0);
-        glUniformMatrix4fv(*shader_program.uniform_location("uProjection"), 1, true, perspective.data());
+        auto perspective = Transform<GLfloat>::perspective(fov_radians, window.aspect_ratio(), 0.1, 100.0);
+        glUniformMatrix4fv(*shader_program.uniform_location("uProjection"), 1, true, perspective.matrix.data());
 
         GLuint vao;
         glGenVertexArrays(1, &vao);
@@ -116,18 +117,12 @@ int main(int argc, char *argv[]) {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             GLfloat angle = static_cast<GLfloat>(SDL_GetTicks()) * std::numbers::pi_v<GLfloat> / 5000.0f;
-            GLfloat sin = std::sin(angle);
-            GLfloat cos = std::cos(angle);
             GLfloat height = std::sin(angle*std::numbers::phi_v<GLfloat>) * 7.0f;
-            auto model_transform = Mat4<GLfloat>{{
-                cos,  0, sin, 0,
-                0,    1, 0,   0,
-                -sin, 0, cos, 0,
-                0,    0, 0,   1,
-            }}
-            .translate(0, height, -13.0);
+            auto model_transform = Transform<GLfloat>::identity()
+                .rotate_y(angle)
+                .translate(0, height, -13.0);
 
-            glUniformMatrix4fv(*shader_program.uniform_location("uModels"), 1, true, model_transform.data());
+            glUniformMatrix4fv(*shader_program.uniform_location("uModels"), 1, true, model_transform.matrix.data());
 
             gl.use_program(shader_program);
             model.draw_instances(1);

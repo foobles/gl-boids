@@ -8,7 +8,7 @@
 #include <vector>
 #include <optional>
 #include "mesh.hpp"
-#include "vec4.hpp"
+#include "matrix.hpp"
 
 class ObjFormat {
 public:

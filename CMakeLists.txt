@@ -29,8 +29,8 @@ set(SOURCE_HEADERS
         src/gl_session.hpp
         src/gl_shader_program.hpp
         src/obj_format.cpp
-        src/mat4.hpp
-        src/vec4.hpp src/mesh.hpp src/mesh.cpp)
+        src/matrix.hpp
+        src/mesh.hpp src/mesh.cpp src/transform.hpp)
 
 add_executable(SDL_Glew_Test ${SOURCES} ${SOURCE_HEADERS})
 target_include_directories(SDL_Glew_Test PUBLIC ${SDL2_INCLUDE_DIRS} ${SDL2_IMAGE_INCLUDE_DIRS} ${GLEW_INCLUDE_DIRS})
