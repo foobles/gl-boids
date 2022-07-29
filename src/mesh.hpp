@@ -19,7 +19,7 @@ public:
     Mesh(std::span<Vertex> vertex_data, std::span<GLuint> element_data);
     ~Mesh() noexcept;
 
-    void draw() const;
+    void draw_instances(GLsizei instances) const;
 
 private:
     GLuint array_buffer;

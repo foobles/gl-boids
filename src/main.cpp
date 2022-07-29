@@ -24,11 +24,11 @@ char const *VERTEX_SHADER_SOURCE = R"(
 
     out vec2 texCoord;
 
-    uniform mat4 uModel;
+    uniform mat4 uModels[128];
     uniform mat4 uProjection;
 
     void main() {
-        gl_Position = vec4(aPos, 1.0) * uModel * uProjection;
+        gl_Position = vec4(aPos, 1.0) * uModels[gl_InstanceID] * uProjection;
         texCoord = aTexCoord;
     }
 )";
@@ -115,10 +115,10 @@ int main(int argc, char *argv[]) {
 
             GLfloat height = std::sin(static_cast<GLfloat>(SDL_GetTicks()) * std::numbers::pi_v<GLfloat> / 5000.0f) * 5.0f;
             auto model_transform = Mat4<GLfloat>::identity().translate(0, height, -8.0);
-            glUniformMatrix4fv(*shader_program.uniform_location("uModel"), 1, true, model_transform.data());
+            glUniformMatrix4fv(*shader_program.uniform_location("uModels"), 1, true, model_transform.data());
 
             gl.use_program(shader_program);
-            model.draw();
+            model.draw_instances(1);
 
             window.swap_buffers();
 

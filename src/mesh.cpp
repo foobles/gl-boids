@@ -24,8 +24,8 @@ Mesh::~Mesh() noexcept {
     glDeleteBuffers(2, buffers);
 }
 
-void Mesh::draw() const {
+void Mesh::draw_instances(GLsizei instances) const {
     glBindBuffer(GL_ARRAY_BUFFER, array_buffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_array_buffer);
-    glDrawElements(GL_TRIANGLES, vertex_count, GL_UNSIGNED_INT, nullptr);
+    glDrawElementsInstanced(GL_TRIANGLES, vertex_count, GL_UNSIGNED_INT, nullptr, instances);
 }
