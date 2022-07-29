@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
                 .fragment_shader(FRAGMENT_SHADER_SOURCE)
                 .build(gl);
 
-        SDL_Surface *rgb_img = image_loader.load_rgb24_image_flipped("assets/wall.jpg");
+        SDL_Surface *rgb_img = image_loader.load_rgb24_image_flipped("assets/boid.png");
         GLuint tex;
         glGenTextures(1, &tex);
 
@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
         glGenerateMipmap(GL_TEXTURE_2D);
         SDL_FreeSurface(rgb_img);
 
-        Mesh model = ObjFormat("assets/square.obj").create_mesh();
+        Mesh model = ObjFormat("assets/boid.obj").create_mesh();
 
         gl.use_program(shader_program);
         glUniform1i(*shader_program.uniform_location("uTex"), 0);
@@ -99,6 +99,8 @@ int main(int argc, char *argv[]) {
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
 
+        glEnable(GL_DEPTH_TEST);
+
         bool running = true;
         while (running) {
             SDL_Event e;
@@ -111,10 +113,20 @@ int main(int argc, char *argv[]) {
                 }
             }
 
-            glClear(GL_COLOR_BUFFER_BIT);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            GLfloat height = std::sin(static_cast<GLfloat>(SDL_GetTicks()) * std::numbers::pi_v<GLfloat> / 5000.0f) * 5.0f;
-            auto model_transform = Mat4<GLfloat>::identity().translate(0, height, -8.0);
+            GLfloat angle = static_cast<GLfloat>(SDL_GetTicks()) * std::numbers::pi_v<GLfloat> / 5000.0f;
+            GLfloat sin = std::sin(angle);
+            GLfloat cos = std::cos(angle);
+            GLfloat height = std::sin(angle*std::numbers::phi_v<GLfloat>) * 7.0f;
+            auto model_transform = Mat4<GLfloat>{{
+                cos,  0, sin, 0,
+                0,    1, 0,   0,
+                -sin, 0, cos, 0,
+                0,    0, 0,   1,
+            }}
+            .translate(0, height, -13.0);
+
             glUniformMatrix4fv(*shader_program.uniform_location("uModels"), 1, true, model_transform.data());
 
             gl.use_program(shader_program);
