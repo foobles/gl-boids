@@ -20,7 +20,9 @@ set(SOURCES
         src/sdl_image_loader.cpp
         src/gl_session.cpp
         src/gl_shader_program.cpp
-        src/obj_format.hpp)
+        src/obj_format.cpp
+        src/mesh.cpp
+        )
 
 set(SOURCE_HEADERS
         src/sdl_session.hpp
@@ -28,9 +30,11 @@ set(SOURCE_HEADERS
         src/sdl_image_loader.hpp
         src/gl_session.hpp
         src/gl_shader_program.hpp
-        src/obj_format.cpp
+        src/obj_format.hpp
+        src/mesh.hpp
         src/matrix.hpp
-        src/mesh.hpp src/mesh.cpp src/transform.hpp)
+        src/transform.hpp
+        )
 
 add_executable(SDL_Glew_Test ${SOURCES} ${SOURCE_HEADERS})
 target_include_directories(SDL_Glew_Test PUBLIC ${SDL2_INCLUDE_DIRS} ${SDL2_IMAGE_INCLUDE_DIRS} ${GLEW_INCLUDE_DIRS})
