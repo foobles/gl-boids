@@ -91,11 +91,12 @@ constexpr Transform<T> Transform<T>::rotate_z(T angle) noexcept {
 
 template<typename T>
 constexpr Transform<T> Transform<T>::scale(T sx, T sy, T sz) noexcept {
-    Transform<T> ret = *this;
-    ret.matrix.get(0, 0) * sx;
-    ret.matrix.get(1, 1) * sy;
-    ret.matrix.get(2, 2) * sz;
-    return ret;
+    return {matrix * Mat4<T>{{
+        sx, 0,  0,  0,
+        0,  sy, 0,  0,
+        0,  0,  sz, 0,
+        0,  0,  0,  1,
+    }}};
 }
 
 template<typename T>
