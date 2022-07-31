@@ -7,13 +7,14 @@
 
 #include <array>
 #include <cmath>
+#include <utility>
 
 template<typename T, int W, int H>
 class Matrix {
 public:
     static constexpr int ELEM_COUNT = W * H;
 
-    constexpr Matrix(std::array<T, ELEM_COUNT> const &arr) noexcept;
+    std::array<T, ELEM_COUNT> arr;
 
     [[nodiscard]] constexpr T const &get(int col, int row) const noexcept;
     [[nodiscard]] constexpr T &get(int col, int row) noexcept;
@@ -24,11 +25,11 @@ public:
     [[nodiscard]] constexpr T const *data() const noexcept;
     [[nodiscard]] constexpr T *data() noexcept;
 
-    [[nodiscard]] static constexpr Matrix identity() noexcept requires (W == H);
+    constexpr void transform(auto F) noexcept;
 
-private:
-    std::array<T, ELEM_COUNT> arr_;
+    [[nodiscard]] static constexpr Matrix identity() noexcept requires (W == H);
 };
+
 
 template<typename T>
 using Mat4 = Matrix<T, 4, 4>;
@@ -36,41 +37,50 @@ using Mat4 = Matrix<T, 4, 4>;
 template<typename T>
 using Vec4 = Matrix<T, 4, 1>;
 
-template<typename T, int W, int H>
-constexpr Matrix<T, W, H>::Matrix(std::array<T, ELEM_COUNT> const &arr) noexcept:
-    arr_(arr)
-{}
+template<typename T>
+using Vec3 = Matrix<T, 3, 1>;
+
 
 template<typename T, int W, int H>
 constexpr T const &Matrix<T, W, H>::get(int col, int row) const noexcept {
-    return arr_[row*W + col];
+    return arr[row * W + col];
 }
+
 
 template<typename T, int W, int H>
 constexpr T &Matrix<T, W, H>::get(int col, int row) noexcept {
-    return arr_[row*W + col];
+    return arr[row * W + col];
 }
 
 
 template<typename T, int W, int H>
 constexpr T const &Matrix<T, W, H>::operator[](int i) const noexcept requires (H == 1) {
-    return arr_[i];
+    return arr[i];
 }
+
 
 template<typename T, int W, int H>
 constexpr T &Matrix<T, W, H>::operator[](int i) noexcept requires (H == 1) {
-    return arr_[i];
+    return arr[i];
 }
 
 
 template<typename T, int W, int H>
 constexpr T const *Matrix<T, W, H>::data() const noexcept {
-    return arr_.data();
+    return arr.data();
 }
 
 template<typename T, int W, int H>
 constexpr T *Matrix<T, W, H>::data() noexcept {
-    return arr_.data();
+    return arr.data();
+}
+
+
+template<typename T, int W, int H>
+constexpr void Matrix<T, W, H>::transform(auto f) noexcept {
+    for (int i = 0; i < ELEM_COUNT; ++i) {
+        arr[i] = f(i, arr[i]);
+    }
 }
 
 template<typename T, int W, int H>
@@ -80,6 +90,35 @@ constexpr Matrix<T, W, H> Matrix<T, W, H>::identity() noexcept requires (W == H)
         ret.get(i, i) = 1;
     }
     return ret;
+}
+
+
+template<typename T, int A, int B>
+constexpr Matrix<T, A, B> &operator+=(Matrix<T, A, B> &m1, Matrix<T, A, B> m2) noexcept {
+    m1.transform([&](int i, T cur) { return cur + m2.arr[i]; });
+    return m1;
+}
+
+template<typename T, int A, int B>
+constexpr Matrix<T, A, B> operator+(Matrix<T, A, B> m1, Matrix<T, A, B> m2) noexcept {
+    return (m1 += m2);
+}
+
+template<typename T, int A, int B>
+constexpr Matrix<T, A, B> &operator-=(Matrix<T, A, B> &m1, Matrix<T, A, B> m2) noexcept {
+    m1.transform([&](int i, T cur) { return cur - m2.arr[i]; });
+    return m1;
+}
+
+template<typename T, int A, int B>
+constexpr Matrix<T, A, B> operator-(Matrix<T, A, B> m1, Matrix<T, A, B> m2) noexcept {
+    return (m1 -= m2);
+}
+
+template<typename T, int A, int B>
+constexpr Matrix<T, A, B> operator-(Matrix<T, A, B> m) noexcept {
+    m.transform([](int i, T cur) { return -cur; });
+    return m;
 }
 
 template<typename T, int A, int B, int C>
@@ -96,6 +135,29 @@ constexpr Matrix<T, A, B> operator*(Matrix<T, C, B> m1, Matrix<T, A, C> m2) noex
     }
     return ret;
 }
+
+template<typename T, int A, int B>
+constexpr Matrix<T, A, B> &operator*=(Matrix<T, A, B> &m1, Matrix<T, A, A> m2) noexcept {
+    m1 = m1 * m2;
+    return m1;
+}
+
+template<typename T, int W, int H>
+constexpr Matrix<T, W, H> &operator*=(Matrix<T, W, H> &m, T s) noexcept {
+    m.transform([=](int, T cur) { return s * cur; });
+    return m;
+}
+
+template<typename T, int W, int H>
+constexpr Matrix<T, W, H> operator*(Matrix<T, W, H> m, T s) noexcept {
+    return (m *= s);
+}
+
+template<typename T, int W, int H>
+constexpr Matrix<T, W, H> operator*(T s, Matrix<T, W, H> m) noexcept {
+    return m * s;
+}
+
 
 
 
