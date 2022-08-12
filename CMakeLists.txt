@@ -22,6 +22,7 @@ set(SOURCES
         src/gl_shader_program.cpp
         src/obj_format.cpp
         src/mesh.cpp
+        src/boid.cpp
         )
 
 set(SOURCE_HEADERS
@@ -32,6 +33,7 @@ set(SOURCE_HEADERS
         src/gl_shader_program.hpp
         src/obj_format.hpp
         src/mesh.hpp
+        src/boid.hpp
         src/matrix.hpp
         src/transform.hpp
         )

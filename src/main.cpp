@@ -1,5 +1,6 @@
 #include <numbers>
 #include <cmath>
+#include <cstring>
 #include <stdexcept>
 
 #include "GL/glew.h"
@@ -14,6 +15,7 @@
 #include "gl_shader_program.hpp"
 #include "matrix.hpp"
 #include "transform.hpp"
+#include "boid.hpp"
 
 #include "obj_format.hpp"
 #include "mesh.hpp"
@@ -89,7 +91,7 @@ int main(int argc, char *argv[]) {
 
         auto fov_degrees = 80.0f;
         auto fov_radians = fov_degrees * std::numbers::pi_v<GLfloat> / 180.0f;
-        auto perspective = Transform<GLfloat>::perspective(fov_radians, window.aspect_ratio(), 0.1, 100.0);
+        auto perspective = Transform<GLfloat>::perspective(fov_radians, window.aspect_ratio(), 0.1, 500.0);
         glUniformMatrix4fv(*shader_program.uniform_location("uProjection"), 1, true, perspective.matrix.data());
 
         GLuint vao;
@@ -101,6 +103,29 @@ int main(int argc, char *argv[]) {
         glEnableVertexAttribArray(1);
 
         glEnable(GL_DEPTH_TEST);
+
+        constexpr int BOID_COUNT = 100;
+        GLfloat boid_transform_mat_data[Mat4<GLfloat>::ELEM_COUNT * BOID_COUNT];
+
+        Boid boids[BOID_COUNT];
+        Boid::MovementDecision decisions[BOID_COUNT];
+        for (int i = 0; i < BOID_COUNT; ++i) {
+            boids[i] = {
+                .pos = {{
+                    static_cast<GLfloat>(i%5) * 10.0f,
+                    static_cast<GLfloat>(i/5%5) * 10.0f,
+                    static_cast<GLfloat>(-i%25) * 10.0f - 150.0f
+                }},
+                .velocity = {0, 0, 0},
+            };
+        }
+
+        Boid::Mindset mindset = {
+            .obstacle_avoiding_bias = 1.0/5,
+            .centering_bias = 1.0/60,
+            .conforming_bias = 1.0,
+            .maximum_movement = 2.0,
+        };
 
         bool running = true;
         while (running) {
@@ -116,20 +141,51 @@ int main(int argc, char *argv[]) {
 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            GLfloat angle = static_cast<GLfloat>(SDL_GetTicks()) * std::numbers::pi_v<GLfloat> / 5000.0f;
-            GLfloat height = std::sin(angle*std::numbers::phi_v<GLfloat>) * 7.0f;
-            auto model_transform = Transform<GLfloat>::identity()
-                .rotate_y(angle)
-                .translate(0, height, -13.0);
 
-            glUniformMatrix4fv(*shader_program.uniform_location("uModels"), 1, true, model_transform.matrix.data());
+            for (int i = 0; i < BOID_COUNT; ++i) {
+                Boid::SituationalAwareness awareness;
+                for (int j = 0; j < BOID_COUNT; ++j) {
+                    if (i != j) {
+                        boids[i].consider(awareness, boids[j]);
+                    }
+                }
+                decisions[i] = awareness.into_decision(mindset);
+            }
+
+            for (int i = 0; i < BOID_COUNT; ++i) {
+                Boid &b = boids[i];
+                b.act_upon(decisions[i]);
+                if (b.pos[0] > 50*3) {
+                    b.pos[0] -= 100*3;
+                } else if (b.pos[0] < -50*3) {
+                    b.pos[0] += 100*3;
+                }
+
+                if (b.pos[1] > 40*3) {
+                    b.pos[1] -= 80*3;
+                } else if (b.pos[1] < -40*3) {
+                    b.pos[1] += 80*3;
+                }
+
+                if (b.pos[2] > -10) {
+                    b.pos[2] -= 400;
+                } else if (b.pos[2] < -410) {
+                    b.pos[2] += 400;
+                }
+
+                auto trans = boids[i].transform().matrix;
+                std::memcpy(&boid_transform_mat_data[i * 16], trans.data(), sizeof(GLfloat) * 16);
+            }
 
             gl.use_program(shader_program);
-            model.draw_instances(1);
+
+
+            glUniformMatrix4fv(*shader_program.uniform_location("uModels"), BOID_COUNT, true, boid_transform_mat_data);
+            model.draw_instances(BOID_COUNT);
 
             window.swap_buffers();
 
-            SDL_Delay(1000 / 60);
+            SDL_Delay(1000/60);
         }
 
     } catch(std::runtime_error const &err) {
